@@ -1,67 +1,145 @@
 import sys
-from os.path import expanduser
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import * #импорт всего из QtWidgets
 from PyQt5.QtMultimedia import *
 from PyQt5.QtCore import *
+from PyQt5.QtMultimediaWidgets import QVideoWidget
+from PyQt5.QtGui import QIcon
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.player = QMediaPlayer()
-        self.userAction = -1  # 0- стоп, 1- проигрывать 2-пауза
-        self.player.setVolume(60) #Начальное кол-во единиц громкости
-
-
         self.Screen()
 
-    def Screen(self):                      #Функция, которая создаёт окно программы
-        self.setWindowTitle('YandexPlayer')
-        controlBar = self.addControls()
-        centralWidget = QWidget()
-        centralWidget.setLayout(controlBar)
-        self.setCentralWidget(centralWidget)
-        self.resize(200, 100)
-        self.show()
-
-
-    def createToolbar(self):
-        pass
-
-
-    def addControls(self):
-        controlArea = QVBoxLayout()  # Центральный виджет
-        seekSliderLayout = QHBoxLayout()
-        controls = QHBoxLayout()
-        playlistCtrlLayout = QHBoxLayout()
-
+    def Screen(self):                      #Функция, которая создаёт окно программ
+        self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
+        videoWidget = QVideoWidget()
         # Создание кнопок
-        playBtn = QPushButton('Play')  # play button
-        pauseBtn = QPushButton('Pause')  # pause button
-        stopBtn = QPushButton('Stop')  # stop button
+        self.playButton = QPushButton()
+        self.playButton.setEnabled(False)
+        self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+        self.playButton.clicked.connect(self.play)  # play button
+
+        self.pauseButton = QPushButton()  # pause button
+        self.pauseButton.setEnabled(False)
+        self.pauseButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPause))
+        self.pauseButton.clicked.connect(self.pause)
+
+        self.stopButton = QPushButton()  # pause button
+        self.stopButton.setEnabled(False)
+        self.stopButton.setIcon(self.style().standardIcon(QStyle.SP_MediaStop))
+        self.stopButton.clicked.connect(self.stop)
+
+        self.positionSlider = QSlider(Qt.Horizontal)
+        self.positionSlider.setRange(0, 0)
+        self.positionSlider.sliderMoved.connect(self.setPosition)
+
+        #Слайдер
+        self.positionSlider = QSlider(Qt.Horizontal)
+        self.positionSlider.setRange(0, 0)
+        self.positionSlider.sliderMoved.connect(self.setPosition)
+
+        # Открыть файл
+        openAction = QAction(QIcon('open.png'), '&Open', self)
+        openAction.setShortcut('Ctrl+O')
+        openAction.setStatusTip('Open movie')
+        openAction.triggered.connect(self.openFile)
 
 
 
+        #Менюбар
+        menuBar = self.menuBar()
+        fileMenu = menuBar.addMenu('&File')
+        fileMenu.addAction(openAction)
 
+        # Create a widget for window contents
+        wid = QWidget(self)
+        self.setCentralWidget(wid)
 
+        # Create layouts to place inside widget
+        controlLayout = QHBoxLayout()
+        controlLayout.setContentsMargins(0, 0, 0, 0)
+        controlLayout.addWidget(self.playButton)
+        controlLayout.addWidget(self.pauseButton)
+        controlLayout.addWidget(self.stopButton)
+        controlLayout.addWidget(self.positionSlider)
 
+        layout = QVBoxLayout()
+        layout.addWidget(videoWidget)
+        layout.addLayout(controlLayout)
 
-        # Горизонтальный макет
-        controls.addWidget(playBtn)
-        controls.addWidget(pauseBtn)
-        controls.addWidget(stopBtn)
+        wid.setLayout(layout)
 
+        self.mediaPlayer.setVideoOutput(videoWidget)
+        self.mediaPlayer.stateChanged.connect(self.mediaStateChanged)
+        self.mediaPlayer.positionChanged.connect(self.positionChanged)
+        self.mediaPlayer.durationChanged.connect(self.durationChanged)
+        self.mediaPlayer.error.connect(self.handleError)
 
+        self.setWindowTitle('YandexPlayer')
 
-        # Вертикальный макет
-        controlArea.addLayout(seekSliderLayout)
-        controlArea.addLayout(controls)
-        controlArea.addLayout(playlistCtrlLayout)
-        return controlArea
+    def openFile(self):
+        fileName, _ = QFileDialog.getOpenFileName(self, "Open Movie",
+                                                  QDir.homePath())
+
+        if fileName != '':
+            self.mediaPlayer.setMedia(
+                QMediaContent(QUrl.fromLocalFile(fileName)))
+            self.playButton.setEnabled(True)
+
+    def play(self):
+        if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
+            self.mediaPlayer.play()
+
+    def pause(self):
+        if self.mediaPlayer.state() == QMediaPlayer.PausedState:
+            self.mediaPlayer.pause()
+
+    def stop(self):
+        if self.mediaPlayer.state() == QMediaPlayer.StoppedState:
+            self.mediaPlayer.stop()
+
+    def setPosition(self, position):
+        self.mediaPlayer.setPosition(position)
+
+    def exitCall(self):
+        sys.exit(app.exec_())
+
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, 'Exit', 'Закрыть YandexPlayer?', QMessageBox.Yes | QMessageBox.No,
+                                     QMessageBox.Yes)
+
+        if reply == QMessageBox.Yes:
+            qApp.quit()
+        else:
+            try:
+                event.ignore()
+            except AttributeError:
+                pass
+
+    def mediaStateChanged(self, state):
+        if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
+            self.playButton.setIcon(
+                self.style().standardIcon(QStyle.SP_MediaPause))
+        else:
+            self.playButton.setIcon(
+                self.style().standardIcon(QStyle.SP_MediaPlay))
+
+    def positionChanged(self, position):
+        self.positionSlider.setValue(position)
+
+    def durationChanged(self, duration):
+        self.positionSlider.setRange(0, duration)
+
+    def handleError(self):
+        self.playButton.setEnabled(False)
+        self.errorLabel.setText("Error: " + self.mediaPlayer.errorString())
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = MainWindow()
+    ex.resize(640, 480)
+    ex.show()
     sys.exit(app.exec_())
