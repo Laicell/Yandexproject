@@ -99,6 +99,8 @@ class MainWindow(QMainWindow):
     def stop(self):
         if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
             self.mediaPlayer.stop()
+        else:
+            self.mediaPlayer.stop()
 
     def setPosition(self, position):
         self.mediaPlayer.setPosition(position)
