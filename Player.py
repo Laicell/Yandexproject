@@ -17,17 +17,17 @@ class MainWindow(QMainWindow):
         videoWidget = QVideoWidget()
         # Создание кнопок
         self.playButton = QPushButton()
-        self.playButton.setEnabled(False)
+        self.playButton.setEnabled(True)
         self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
         self.playButton.clicked.connect(self.play)  # play button
 
         self.pauseButton = QPushButton()  # pause button
-        self.pauseButton.setEnabled(False)
+        self.pauseButton.setEnabled(True)
         self.pauseButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPause))
         self.pauseButton.clicked.connect(self.pause)
 
         self.stopButton = QPushButton()  # pause button
-        self.stopButton.setEnabled(False)
+        self.stopButton.setEnabled(True)
         self.stopButton.setIcon(self.style().standardIcon(QStyle.SP_MediaStop))
         self.stopButton.clicked.connect(self.stop)
 
@@ -53,11 +53,11 @@ class MainWindow(QMainWindow):
         fileMenu = menuBar.addMenu('&File')
         fileMenu.addAction(openAction)
 
-        # Create a widget for window contents
+        # Создание виджета для содержимого окна
         wid = QWidget(self)
         self.setCentralWidget(wid)
 
-        # Create layouts to place inside widget
+        # Создание макетов для размещения внутри виджета
         controlLayout = QHBoxLayout()
         controlLayout.setContentsMargins(0, 0, 0, 0)
         controlLayout.addWidget(self.playButton)
@@ -75,7 +75,6 @@ class MainWindow(QMainWindow):
         self.mediaPlayer.stateChanged.connect(self.mediaStateChanged)
         self.mediaPlayer.positionChanged.connect(self.positionChanged)
         self.mediaPlayer.durationChanged.connect(self.durationChanged)
-        self.mediaPlayer.error.connect(self.handleError)
 
         self.setWindowTitle('YandexPlayer')
 
@@ -89,15 +88,15 @@ class MainWindow(QMainWindow):
             self.playButton.setEnabled(True)
 
     def play(self):
-        if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
+        if self.mediaPlayer.state() != QMediaPlayer.PlayingState:
             self.mediaPlayer.play()
 
     def pause(self):
-        if self.mediaPlayer.state() == QMediaPlayer.PausedState:
+        if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
             self.mediaPlayer.pause()
 
     def stop(self):
-        if self.mediaPlayer.state() == QMediaPlayer.StoppedState:
+        if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
             self.mediaPlayer.stop()
 
     def setPosition(self, position):
@@ -131,10 +130,6 @@ class MainWindow(QMainWindow):
 
     def durationChanged(self, duration):
         self.positionSlider.setRange(0, duration)
-
-    def handleError(self):
-        self.playButton.setEnabled(False)
-        self.errorLabel.setText("Error: " + self.mediaPlayer.errorString())
 
 
 if __name__ == '__main__':
