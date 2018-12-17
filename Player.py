@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import * #импорт всего из QtWidgets
 from PyQt5.QtMultimedia import *
 from PyQt5.QtCore import *
 from PyQt5.QtMultimediaWidgets import QVideoWidget
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import *
 
 
 class MainWindow(QMainWindow):
@@ -15,6 +15,8 @@ class MainWindow(QMainWindow):
     def Screen(self):                      #Виджеты
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
         videoWidget = QVideoWidget()
+        self.mediaPlayer.setVolume(60)
+        self.vol = 1
 
         # Создание кнопок
         self.playButton = QPushButton()
@@ -32,14 +34,21 @@ class MainWindow(QMainWindow):
         self.stopButton.setIcon(self.style().standardIcon(QStyle.SP_MediaStop))
         self.stopButton.clicked.connect(self.stop)
 
-        self.positionSlider = QSlider(Qt.Horizontal)
-        self.positionSlider.setRange(0, 0)
-        self.positionSlider.sliderMoved.connect(self.setPosition)
+        self.muteButton = QPushButton()
+        self.muteButton.setEnabled(True)
+        self.muteButton.setIcon(self.style().standardIcon(QStyle.SP_MediaVolumeMuted))
+        self.muteButton.clicked.connect(self.mute)
 
         #Слайдер
         self.positionSlider = QSlider(Qt.Horizontal)
         self.positionSlider.setRange(0, 0)
         self.positionSlider.sliderMoved.connect(self.setPosition)
+
+        self.volumeSlider = QSlider(Qt.Horizontal)
+        self.volumeSlider.setRange(0, 100)
+        self.volumeSlider.sliderMoved.connect(self.setVolume)
+
+
 
         # Открыть файл
         openAction = QAction(QIcon('open.png'), '&Open', self)
@@ -65,6 +74,8 @@ class MainWindow(QMainWindow):
         controlLayout.addWidget(self.pauseButton)
         controlLayout.addWidget(self.stopButton)
         controlLayout.addWidget(self.positionSlider)
+        controlLayout.addWidget(self.muteButton)
+        controlLayout.addWidget(self.volumeSlider)
 
         layout = QVBoxLayout()
         layout.addWidget(videoWidget)
@@ -102,6 +113,15 @@ class MainWindow(QMainWindow):
         else:
             self.mediaPlayer.stop()
 
+    def mute(self):
+        if self.vol % 2 == 0:
+            return self.mediaPlayer.setVolume(1)
+        else:
+            return self.mediaPlayer.setVolume(0)
+
+    def setVolume(self, volume):
+        self.mediaPlayer.setVolume(volume)
+
     def setPosition(self, position):
         self.mediaPlayer.setPosition(position)
 
@@ -134,9 +154,11 @@ class MainWindow(QMainWindow):
     def durationChanged(self, duration):
         self.positionSlider.setRange(0, duration)
 
-    def mouseDoubleClickEvent(self, event):
-        self.setFullScreen(not self.isFullScreen())
-        event.accept()
+    def positionVolume(self, position):
+        self.volumeSlider.setValue(position)
+
+    def durationVolume(self):
+        self.volumeSlider.setRange(0, 100)
 
 
 if __name__ == '__main__':
