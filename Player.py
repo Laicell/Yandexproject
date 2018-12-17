@@ -12,9 +12,10 @@ class MainWindow(QMainWindow):
 
         self.Screen()
 
-    def Screen(self):                      #Функция, которая создаёт окно программ
+    def Screen(self):                      #Виджеты
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
         videoWidget = QVideoWidget()
+
         # Создание кнопок
         self.playButton = QPushButton()
         self.playButton.setEnabled(True)
@@ -130,6 +131,10 @@ class MainWindow(QMainWindow):
 
     def durationChanged(self, duration):
         self.positionSlider.setRange(0, duration)
+
+    def mouseDoubleClickEvent(self, event):
+        self.setFullScreen(not self.isFullScreen())
+        event.accept()
 
 
 if __name__ == '__main__':
